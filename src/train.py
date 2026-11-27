@@ -5,7 +5,6 @@ import logging
 
 import joblib
 import mlflow
-from sklearn.metrics import average_precision_score, precision_score, recall_score, roc_auc_score
 
 try:
     from src.config import (
@@ -18,6 +17,7 @@ try:
         THRESHOLD,
     )
     from src.data import load_data, split_data
+    from src.evaluate import compute_metrics
     from src.features import get_pipeline
 except ImportError:
     from config import (
@@ -30,6 +30,7 @@ except ImportError:
         THRESHOLD,
     )
     from data import load_data, split_data
+    from evaluate import compute_metrics
     from features import get_pipeline
 
 logging.getLogger("mlflow").setLevel(logging.WARNING)
@@ -50,13 +51,10 @@ def main():
         pipeline.fit(X_train, y_train)
 
         proba = pipeline.predict_proba(X_test)[:, 1]
-        pred = (proba >= THRESHOLD).astype(int)
-
+        all_metrics = compute_metrics(y_test, proba)
         metrics = {
-            "average_precision": float(average_precision_score(y_test, proba)),
-            "roc_auc": float(roc_auc_score(y_test, proba)),
-            "precision": float(precision_score(y_test, pred, zero_division=0)),
-            "recall": float(recall_score(y_test, pred, zero_division=0)),
+            k: all_metrics[k]
+            for k in ("average_precision", "roc_auc", "precision", "recall")
         }
         mlflow.log_metric("test_average_precision", metrics["average_precision"])
         mlflow.log_metric("test_roc_auc", metrics["roc_auc"])
