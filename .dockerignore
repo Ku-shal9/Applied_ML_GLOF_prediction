@@ -1,9 +1,0 @@
-.env/
-.git/
-__pycache__/
-*.pyc
-.DS_Store
-mlflow.db
-mlruns/
-notebooks/
-data/
