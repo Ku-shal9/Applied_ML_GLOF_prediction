@@ -1,6 +1,5 @@
 ## streamlit dashboard for glof risk prediction and animated outburst simulation
 
-import json
 import sys
 from pathlib import Path
 
@@ -13,17 +12,14 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))
 
-from src.config import FEATURES, METADATA_PATH, MODEL_PATH, THRESHOLD
+from src.config import FEATURES, MODEL_PATH, THRESHOLD
 from src.predict import load_model, predict
 
 
-# load model and metadata once and cache across interactions
+# load model once and cache across interactions
 @st.cache_resource
-def get_model_and_meta():
-    model = load_model(MODEL_PATH)
-    with open(METADATA_PATH, "r") as f:
-        meta = json.load(f)
-    return model, meta
+def get_model():
+    return load_model(MODEL_PATH)
 
 
 # build animated plotly cross-section of moraine dam and downstream flood wave
@@ -122,8 +118,8 @@ def build_glof_animation(mean_depth, volume_dam, volume_gap, expansion_frac, pro
         sliders=[
             {
                 "steps": [{"args": [[f.name], {"frame": {"duration": 0, "redraw": True}, "mode": "immediate"}], "label": f.name, "method": "animate"} for f in frames],
-                "x": 0.22,
-                "len": 0.78,
+                "x": 0.32,
+                "len": 0.68,
                 "y": -0.20,
                 "yanchor": "top",
                 "pad": {"b": 10, "t": 10},
@@ -138,17 +134,7 @@ def main():
     st.set_page_config(page_title="GLOF Risk Dashboard", layout="wide")
     st.title("Glacial Lake Outburst Flood (GLOF) Risk & Simulation Dashboard")
 
-    model, meta = get_model_and_meta()
-    metrics = meta["metrics"]
-
-    # top model summary metrics
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Test AP", f"{metrics['average_precision']:.3f}")
-    c2.metric("Test ROC-AUC", f"{metrics['roc_auc']:.3f}")
-    c3.metric("Precision", f"{metrics['precision']:.3f}")
-    c4.metric("Recall", f"{metrics['recall']:.3f}")
-
-    st.divider()
+    model = get_model()
 
     # sidebar controls with presets
     st.sidebar.header("Lake Parameters")
